@@ -25,7 +25,7 @@
 #define DEBUGP(x, args...)
 #endif
 
-static int counters = 0, verbose = 0, noflush = 0;
+static int counters = 0, verbose = 0, noflush = 0, noclear = 0;
 
 /* Keeping track of external matches and targets.  */
 static const struct option options[] = {
@@ -34,6 +34,7 @@ static const struct option options[] = {
 	{.name = "test",     .has_arg = false, .val = 't'},
 	{.name = "help",     .has_arg = false, .val = 'h'},
 	{.name = "noflush",  .has_arg = false, .val = 'n'},
+	{.name = "noclear",  .has_arg = false, .val = 'N'},
 	{.name = "modprobe", .has_arg = true,  .val = 'M'},
 	{.name = "table",    .has_arg = true,  .val = 'T'},
 	{NULL},
@@ -49,6 +50,7 @@ static void print_usage(const char *name, const char *version)
 			"	   [ --test ]\n"
 			"	   [ --help ]\n"
 			"	   [ --noflush ]\n"
+			"	   [ --noclear ]\n"
 			"          [ --modprobe=<command>]\n", name);
 
 	exit(1);
@@ -223,6 +225,9 @@ int ip6tables_restore_main(int argc, char *argv[])
 			case 'n':
 				noflush = 1;
 				break;
+			case 'N':
+				noclear = 1;
+				break;
 			case 'M':
 				xtables_modprobe_program = optarg;
 				break;
@@ -325,12 +330,14 @@ int ip6tables_restore_main(int argc, char *argv[])
 
 			if (ops->builtin(chain, handle) <= 0) {
 				if (noflush && ops->is_chain(chain, handle)) {
-					DEBUGP("Flushing existing user defined chain '%s'\n", chain);
-					if (!ops->flush_entries(chain, handle))
-						xtables_error(PARAMETER_PROBLEM,
-							   "error flushing chain "
-							   "'%s':%s\n", chain,
-							   strerror(errno));
+					if (!noclear){
+						DEBUGP("Flushing existing user defined chain '%s'\n", chain);
+						if (!ops->flush_entries(chain, handle))
+							xtables_error(PARAMETER_PROBLEM,
+							"error flushing chain "
+							"'%s':%s\n", chain,
+							strerror(errno));
+					}
 				} else {
 					DEBUGP("Creating new chain '%s'\n", chain);
 					if (!ops->create_chain(chain, handle))
