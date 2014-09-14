@@ -128,19 +128,30 @@ static void add_param_to_argv(char *parsestart)
 				param_buffer[param_len++] = *curchar;
 				escaped = 0;
 				continue;
-			} else if (*curchar == '\\') {
+			}
+			else if (*curchar == '\\' && quote_open == 1) {
 				escaped = 1;
 				continue;
-			} else if (*curchar == '"') {
+			}
+			else if (*curchar == '"' && quote_open == 1) {
 				quote_open = 0;
 				*curchar = ' ';
-			} else {
+			}
+			else if (*curchar == '\'' && quote_open == 2) {
+				quote_open = 0;
+				*curchar = ' ';
+			}
+			else {
 				param_buffer[param_len++] = *curchar;
 				continue;
 			}
 		} else {
 			if (*curchar == '"') {
 				quote_open = 1;
+				continue;
+			}
+			else if (*curchar == '\'') {
+				quote_open = 2;
 				continue;
 			}
 		}
